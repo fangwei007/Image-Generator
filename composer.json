@@ -1,0 +1,20 @@
+{
+    "name": "weifang/bm",
+    "description": "This is a lib for image generation.",
+    "require": {
+        "hashids/hashids": "^1.0",
+        "rackspace/php-opencloud": "^1.15",
+        "aws/aws-sdk-php": "^3.18"
+    },
+    "authors": [
+        {
+            "name": "Wei Fang",
+            "email": "wei@ralphandco.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": {
+            "ralph": "src/"
+        }
+    }
+}
