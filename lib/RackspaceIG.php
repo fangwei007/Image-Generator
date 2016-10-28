@@ -59,6 +59,7 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
             $this->initRackspaceClient();
         }
 
+        $this->imageFolder = $saveTo;
         $this->toReplaceWithURL = $toReplaceWithURL;
         if ($this->buildNamespace($saveTo, $structure) && $this->createShortUrl($encode)) {
             foreach ($this->inputs as $input) {
@@ -76,7 +77,8 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
             $this->recursiveRemoveDirectory($this->directory);
         }
 
-        return $this->responseJSON();
+        // Uncomment below for normol usage
+//        return $this->responseJSON();
     }
 
     /**

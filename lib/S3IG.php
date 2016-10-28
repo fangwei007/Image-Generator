@@ -72,6 +72,7 @@ class S3IG extends ImageGenerator\ImageGenerator {
             $this->initS3Client();
         }
 
+        $this->imageFolder = $saveTo;
         $this->toReplaceWithURL = $toReplaceWithURL;
         if ($this->buildNamespace($saveTo, $structure) && $this->createShortUrl($encode)) {
             foreach ($this->inputs as $input) {
