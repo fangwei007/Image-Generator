@@ -1,11 +1,11 @@
 # Image-Generator
 ==========================================
 
-PHP lib for Image-generator.
+PHP lib for generating customized images.
 
 Requirements
 ------------
-* PHP >=5.4
+* PHP >=5.3
 * imagick extension for PHP
 
 **Note**: 
