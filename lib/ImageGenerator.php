@@ -59,7 +59,7 @@ class ImageGenerator {
     public function setDbConnection(\mysqli $mysqli) {
         $this->mysqli = $mysqli;
     }
-    
+
     /**
      * Set table name.
      * @param type $tablename
@@ -67,8 +67,6 @@ class ImageGenerator {
     public function setDbTable($tablename) {
         $this->table = $tablename;
     }
-    
-    
 
     /**
      * Close database connection.
@@ -190,16 +188,36 @@ class ImageGenerator {
      * @param string $structure Structure under target directory.
      * @return boolean
      */
-    public function buildNamespace($directory, $structure = NULL) {
+    public function buildNamespaceOnTimestamp($directory, $structure = NULL) {
         list($year, $month, $day) = explode('-', date('Y-m-d'));
         umask(0);
-        
+
         if ($structure != NULL) {
             $this->directory = "$directory/$structure/" . time() . rand(1, 10000) . '/';
         } else {
             // Build name space synced to date and timestamp
             $this->directory = "$directory/usr/$year/$month/$day/" . time() . rand(1, 10000) . '/';
         }
+
+        // Create dir
+        if (!file_exists($this->directory)) {
+            if (!mkdir($this->directory, 0777, TRUE)) {
+                return FALSE;
+            }
+        }
+
+        return $this->directory;
+    }
+
+    /**
+     * Build directory structure for local images saving.
+     * @param string $directory Path to target directory.
+     * @param string $structure Structure under target directory.
+     * @return boolean
+     */
+    public function buildNamespaceOnShortUrl($directory) {
+        umask(0);
+        $this->directory = "$directory/usr/$this->shortUrl/";
 
         // Create dir
         if (!file_exists($this->directory)) {
@@ -221,7 +239,7 @@ class ImageGenerator {
         $hashids = new \Hashids\Hashids($encode);
 
         // Encode one number 0 - 10000000
-        $this->shortUrl = $hashids->encode(rand(0, 10000000));
+        $this->shortUrl = $hashids->encode(rand(0, 10000000)) . $hashids->encode(time());
 
         // Check if the shortUrl already exists, if does, regenerate
         if (!$this->isValidShortUrl($this->shortUrl)) {
@@ -314,7 +332,6 @@ class ImageGenerator {
         }
 
         array_push($this->localFiles, str_replace($this->imageFolder, realpath($this->imageFolder), $path));
-//        $sub_path = str_replace(array('..'), BASE_URL, $path);
         $sub_path = BASE_URL . substr($path, strlen($this->toReplaceWithURL));
 
         return array('name' => $filename, 'path' => $sub_path);
@@ -366,8 +383,9 @@ class ImageGenerator {
      */
     protected function sortImage(&$array) {
         usort($array, function($a, $b) {
-            if ($a['level'] == $b['level'])
+            if ($a['level'] == $b['level']) {
                 return 0;
+            }
             return ($a['level'] < $b['level']) ? -1 : 1;
         });
     }

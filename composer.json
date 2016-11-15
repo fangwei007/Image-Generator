@@ -3,7 +3,7 @@
     "description": "This is a lib for image generation.",
     "require": {
         "hashids/hashids": "^1.0",
-        "rackspace/php-opencloud": "^1.15",
+        "rackspace/php-opencloud": "^1.16",
         "aws/aws-sdk-php": "^3.18"
     },
     "authors": [

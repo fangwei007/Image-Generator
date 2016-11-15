@@ -28,13 +28,10 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
      * @param string $file Path to local image file.
      * @return void
      */
-    public function pushRackspace($file) {
+    public function pushRackspace($file, $onTimestamp) {
         $localFileName = $file;
-
-        $remoteFileName = strstr($file, 'usr');
-
+        $remoteFileName = $onTimestamp == TRUE ? strstr($file, 'usr') : substr(strstr($file, 'usr'), 4);
         $handle = fopen($localFileName, 'r');
-
         $object = $this->container->uploadObject($remoteFileName, $handle);
 
         if (is_resource($handle)) {
@@ -45,6 +42,19 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
     }
 
     /**
+     * Check if object exists on Rackspace cloud.
+     * @param string $object Path of object on Rackspace cloud
+     * @return boolean TRUE exists; FALSE not exists.
+     */
+    public function retrieveRackspace($object) {
+        if ($this->container == NULL) {
+            $this->initRackspaceClient();
+        }
+
+        return $this->container->objectExists($object);
+    }
+
+    /**
      * Main parser to generate directory and images. Will echo JSON response.
      * @param stirng $saveTo Realpath to storage folder.
      * @param string $structure Folder structure under target folder.
@@ -52,7 +62,7 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
      * @param bool $clean Whether clean file after generation.
      * @return void
      */
-    public function generateImagesTo($saveTo, $toReplaceWithURL, $structure = NULL, $encode = NULL, $clean = FALSE) {
+    public function generateImagesTo($saveTo, $toReplaceWithURL, $onTimestamp = TRUE, $structure = NULL, $encode = NULL, $clean = FALSE) {
         global $rackspace_enable;
 
         if ($rackspace_enable) {
@@ -61,15 +71,23 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
 
         $this->imageFolder = $saveTo;
         $this->toReplaceWithURL = $toReplaceWithURL;
-        if ($this->buildNamespace($saveTo, $structure) && $this->createShortUrl($encode)) {
-            foreach ($this->inputs as $input) {
-                $this->generate($input);
+        if ($onTimestamp) {
+            if ($this->buildNamespaceOnTimestamp($saveTo, $structure) && $this->createShortUrl($encode)) {
+                foreach ($this->inputs as $input) {
+                    $this->generate($input);
+                }
+            }
+        } else {
+            if ($this->buildNamespaceOnShortUrl($saveTo) && $this->createShortUrl($encode)) {
+                foreach ($this->inputs as $input) {
+                    $this->generate($input);
+                }
             }
         }
 
         if ($rackspace_enable) {
             foreach ($this->localFiles as $file) {
-                $this->pushRackspace($file);
+                $this->pushRackspace($file, $onTimestamp);
             }
         }
 
@@ -77,8 +95,7 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
             $this->recursiveRemoveDirectory($this->directory);
         }
 
-        // Uncomment below for normol usage
-//        return $this->responseJSON();
+        return $this->responseJSON();
     }
 
     /**
@@ -89,10 +106,9 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
      * @return boolean
      */
     protected function saveURL($image, $directory, $filename) {
-        global $rackspace_enable;
+        global $rackspace_enable, $rackspace_https;
         $path = $directory . $filename . '.jpg';
 
-        // Image saved to the specified file location <dir tree>
         if (!$image->writeImage($path)) {
             $response = array('success' => FALSE, 'error' => 'Writing ' . $filename . '.jpg failed!!');
             header('Content-Type: application/json');
@@ -101,19 +117,18 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
         }
 
         array_push($this->localFiles, str_replace($this->imageFolder, realpath($this->imageFolder), $path));
+
         if ($rackspace_enable) {
             $cdnContainer = $this->container->getCdn();
-            $cdnUri = $cdnContainer->getCdnUri();
+            $cdnUri = $rackspace_https ? $cdnContainer->getCdnSslUri() : $cdnContainer->getCdnUri();
             $sub_path = str_replace(array($this->imageFolder), $cdnUri, $path);
         } else {
-//            $sub_path = str_replace(array('..'), BASE_URL, $path);
             $sub_path = BASE_URL . substr($path, strlen($this->toReplaceWithURL));
         }
 
-
         return array('name' => $filename, 'path' => $sub_path);
     }
-    
+
     /**
      * Annotate text onto canvas.
      * @param imagick $canvas
@@ -135,9 +150,7 @@ class RackspaceIG extends ImageGenerator\ImageGenerator {
         $draw->setFillOpacity(1);
         $draw->setFillColor($color);
         $draw->setGravity($gravity);
-
         $canvas->annotateImage($draw, $x, $y, $angle, $text);
-
         $draw->destroy();
     }
 

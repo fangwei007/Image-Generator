@@ -32,9 +32,9 @@ class S3IG extends ImageGenerator\ImageGenerator {
      * @param string $file Path to local image file.
      * @return void
      */
-    public function pushS3($file) {
+    public function pushS3($file, $onTimestamp) {
         $localFileName = $file;
-        $remoteFileName = strstr($file, 'usr');
+        $remoteFileName = $onTimestamp == TRUE ? strstr($file, 'usr') : substr(strstr($file, 'usr'), 4);
         $handle = fopen($localFileName, 'r');
 
         try {
@@ -53,8 +53,21 @@ class S3IG extends ImageGenerator\ImageGenerator {
 
             return $result;
         } catch (S3Exception $e) {
-            echo $e->getMessage() . "\n";
+            error_log($e->getMessage());
         }
+    }
+
+    /**
+     * Check if object exists on S3 cloud.
+     * @param string $object Path of object on S3 cloud
+     * @return boolean TRUE exists; FALSE not exists.
+     */
+    public function retrieveS3($object) {
+        if ($this->s3 == NULL) {
+            $this->initS3Client();
+        }
+
+        return $this->s3->doesObjectExist(S3_BUCKET, $object);
     }
 
     /**
@@ -65,7 +78,7 @@ class S3IG extends ImageGenerator\ImageGenerator {
      * @param bool $clean Whether clean file after generation.
      * @return void
      */
-    public function generateImagesTo($saveTo, $toReplaceWithURL, $structure = NULL, $encode = NULL, $clean = FALSE) {
+    public function generateImagesTo($saveTo, $toReplaceWithURL, $onTimestamp = TRUE, $structure = NULL, $encode = NULL, $clean = FALSE) {
         global $S3_enable;
 
         if ($S3_enable) {
@@ -74,15 +87,24 @@ class S3IG extends ImageGenerator\ImageGenerator {
 
         $this->imageFolder = $saveTo;
         $this->toReplaceWithURL = $toReplaceWithURL;
-        if ($this->buildNamespace($saveTo, $structure) && $this->createShortUrl($encode)) {
-            foreach ($this->inputs as $input) {
-                $this->generate($input);
+
+        if ($onTimestamp) {
+            if ($this->buildNamespace($saveTo, $structure) && $this->createShortUrl($encode)) {
+                foreach ($this->inputs as $input) {
+                    $this->generate($input);
+                }
+            }
+        } else {
+            if ($this->buildNamespaceOnShortUrl($saveTo) && $this->createShortUrl($encode)) {
+                foreach ($this->inputs as $input) {
+                    $this->generate($input);
+                }
             }
         }
 
         if ($S3_enable) {
             foreach ($this->localFiles as $file) {
-                $this->pushS3($file);
+                $this->pushS3($file, $onTimestamp);
             }
         }
 
@@ -103,8 +125,7 @@ class S3IG extends ImageGenerator\ImageGenerator {
     protected function saveURL($image, $directory, $filename) {
         global $S3_enable;
         $path = $directory . $filename . '.jpg';
-        
-        // Image saved to the specified file location <dir tree>
+
         if (!$image->writeImage($path)) {
             $response = array('success' => FALSE, 'error' => 'Writing ' . $filename . '.jpg failed!!');
             header('Content-Type: application/json');
@@ -116,7 +137,6 @@ class S3IG extends ImageGenerator\ImageGenerator {
         if ($S3_enable) {
             $sub_path = str_replace(array($this->imageFolder), S3_SITE_BUCKET, $path);
         } else {
-//            $sub_path = str_replace(array('..'), BASE_URL, $path);
             $sub_path = BASE_URL . substr($path, strlen($this->toReplaceWithURL));
         }
 
