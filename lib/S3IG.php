@@ -89,7 +89,7 @@ class S3IG extends ImageGenerator\ImageGenerator {
         $this->toReplaceWithURL = $toReplaceWithURL;
 
         if ($onTimestamp) {
-            if ($this->buildNamespace($saveTo, $structure) && $this->createShortUrl($encode)) {
+            if ($this->buildNamespaceOnTimestamp($saveTo, $structure) && $this->createShortUrl($encode)) {
                 foreach ($this->inputs as $input) {
                     $this->generate($input);
                 }
