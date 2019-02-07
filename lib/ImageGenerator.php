@@ -288,7 +288,13 @@ class ImageGenerator {
         array_shift($options['media']);
 
         foreach ($options['media'] as $medium) {
-            if ($medium['type'] == 'image') {
+            if ($medium['type'] == 'blob') {
+                $top = new \Imagick();
+                $top->readImageBlob($medium['src']);
+                $top->adaptiveresizeimage($medium['width'], $medium['height']);
+                $this->composite($canvas, $top, $medium['coords'][0], $medium['coords'][1]);
+                $top->destroy();
+            } else if ($medium['type'] == 'image') {
                 $top = new \Imagick($medium['src']);
                 $top->adaptiveresizeimage($medium['width'], $medium['height']);
                 $this->composite($canvas, $top, $medium['coords'][0], $medium['coords'][1]);
