@@ -376,6 +376,8 @@ class ImageGenerator {
         $draw->setFillOpacity(1);
         $draw->setFillColor($color);
         $draw->setGravity($gravity);
+//        $draw->settextkerning(2); // 左右间距
+//        $draw->settextinterlinespacing(8); // 上下行间距
 
         $canvas->annotateImage($draw, $x, $y, $angle, $text);
 
