@@ -285,8 +285,9 @@ class ImageGenerator {
             $canvas->readImageBlob($options['media'][0]['src']);
         }
         $canvas->cropimage($options['media'][0]['width'], $options['media'][0]['height'], ($canvas->getimagewidth() - $options['media'][0]['width']) / 2, ($canvas->getimageheight() - $options['media'][0]['height']) / 2);
+        $canvas->setImagePage(0, 0, 0, 0);
+        
         array_shift($options['media']);
-
         foreach ($options['media'] as $medium) {
             if ($medium['type'] == 'blob') {
                 $top = new \Imagick();
