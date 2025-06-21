@@ -183,6 +183,22 @@ class ImageGenerator {
     }
 
     /**
+     * Build directory structure wrapper used by older APIs.
+     *
+     * In earlier versions a generic buildNamespace() method was exposed. The
+     * implementation was later renamed to buildNamespaceOnTimestamp(), leaving
+     * these calls broken.  Providing this wrapper maintains backwards
+     * compatibility and prevents fatal errors when the old method name is used.
+     *
+     * @param string $directory  Path to target directory.
+     * @param string $structure  Structure under target directory.
+     * @return boolean
+     */
+    public function buildNamespace($directory, $structure = NULL) {
+        return $this->buildNamespaceOnTimestamp($directory, $structure);
+    }
+
+    /**
      * Build directory structure for local images saving.
      * @param string $directory Path to target directory.
      * @param string $structure Structure under target directory.

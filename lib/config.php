@@ -8,7 +8,8 @@
     |
     */
 
-    if (defined("BASE_URL")) {
+    // Define a default BASE_URL if one is not supplied by the application
+    if (!defined("BASE_URL")) {
         define("BASE_URL", "http://localhost:8888");
     }
     
